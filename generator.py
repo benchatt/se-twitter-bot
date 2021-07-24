@@ -7,4 +7,4 @@ seconds = 86400
 
 for line in open(filename):
     sleep(seconds)
-    print(line.rstrip())
+    print(line.rstrip()+'\f')

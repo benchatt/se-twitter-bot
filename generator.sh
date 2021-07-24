@@ -6,4 +6,5 @@ seconds=86400
 while IFS= read -r line; do
 	sleep $seconds
 	echo $line | sed -e 's/[[:space:]]*$//'
+	printf '\xc'
 done < $file
