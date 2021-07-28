@@ -4,11 +4,14 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from getpass import getpass
 from cryptography.fernet import Fernet
-import sys, argparse, yaml, asyncio
+import os,sys, argparse, yaml, asyncio
 import keyring
 
 class TwitterBot:
     def __init__(self,username,password,browser='Firefox'):
+        webd_dir = os.path.join(os.path.dirname(__file__),'webdrivers')
+        if webd_dir not in os.environ['PATH']:
+            os.environ['PATH'] = os.environ['PATH']+':'+webd_dir
         if browser == 'Android':
             self.browser = webdriver.Android('webdrivers')
         elif browser == 'BlackBerry':
@@ -52,6 +55,7 @@ class TwitterBot:
 
 async def post_on_return(process,bot,test):
     proc = await asyncio.create_subprocess_shell(process,stdout=asyncio.subprocess.PIPE)
+    await asyncio.sleep(1)
     while proc.returncode is None:
         data = await proc.stdout.readuntil(b'\f')
         if not data: break
@@ -114,7 +118,7 @@ if __name__ == '__main__':
                 try:
                     with open('settings','rb') as rbfh:
                         binkey = rbfh.read()
-                    f = fernet(binkey)
+                    f = Fernet(binkey)
                     token = f.encrypt(password.encode())
                     with open('users.yaml','a') as afh:
                         yaml.safe_dump({args.username: token.decode()},afh)
@@ -127,11 +131,14 @@ if __name__ == '__main__':
                     token = f.encrypt(password.encode())
                     with open('users.yaml','w') as wfh:
                         yaml.safe_dump({args.username: token.decode()},wfh)
-    bot = TwitterBot(args.username,password,args.browser)
-    try:
-        bot.log_in()
-    except:
-        sys.exit("Twitter login failed")
+    if not args.test_run:
+        bot = TwitterBot(args.username,password,args.browser)
+        try:
+            bot.log_in()
+        except:
+            sys.exit("Twitter login failed")
+    else:
+        bot = None
 
     if sys.platform in ['win32','msys','cygwin']:
         loop = asyncio.ProactorEventLoop()
